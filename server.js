@@ -53,7 +53,7 @@ function getWeatherIcon(code) {
   return '🌡️';
 }
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 app.get('/api/weather', async (req, res) => {
   try {
