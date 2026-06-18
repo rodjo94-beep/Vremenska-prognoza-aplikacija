@@ -130,7 +130,7 @@ app.get('/api/weather', async (req, res) => {
         humidity: 0,
         precipitation: 0,
         windSpeed: 0,
-        icon: '⚠️',
+        
         description: 'Web servis trenutno nije dostupan'
       },
       forecast: []
