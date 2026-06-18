@@ -60,6 +60,11 @@ app.use(express.static(__dirname));
 
 app.get('/api/weather', async (req, res) => {
   try {
+const now = Date.now();
+
+if (cachedWeather && now - cacheTime < CACHE_DURATION) {
+  return res.json(cachedWeather);
+}
     const url = new URL('https://api.open-meteo.com/v1/forecast');
     url.searchParams.set('latitude', CITY.latitude);
     url.searchParams.set('longitude', CITY.longitude);
@@ -91,21 +96,26 @@ app.get('/api/weather', async (req, res) => {
       };
     });
 
-    res.json({
-      city: CITY.name,
-      source: 'Open-Meteo JSON web service',
-      updatedAt: data.current.time,
-      current: {
-        temperature: data.current.temperature_2m,
-        feelsLike: data.current.apparent_temperature,
-        humidity: data.current.relative_humidity_2m,
-        precipitation: data.current.precipitation,
-        windSpeed: data.current.wind_speed_10m,
-        icon: getWeatherIcon(currentCode),
-        description: weatherDescriptions[currentCode] || 'Nepoznato'
-      },
-      forecast
-    });
+   const weatherResult = {
+  city: CITY.name,
+  source: 'Open-Meteo JSON web service',
+  updatedAt: data.current.time,
+  current: {
+    temperature: data.current.temperature_2m,
+    feelsLike: data.current.apparent_temperature,
+    humidity: data.current.relative_humidity_2m,
+    precipitation: data.current.precipitation,
+    windSpeed: data.current.wind_speed_10m,
+    icon: getWeatherIcon(currentCode),
+    description: weatherDescriptions[currentCode] || 'Nepoznato'
+  },
+  forecast
+};
+
+cachedWeather = weatherResult;
+cacheTime = Date.now();
+
+res.json(weatherResult);
   } catch (error) {
     res.status(500).json({
       message: 'Greška pri učitavanju vremenske prognoze.',
