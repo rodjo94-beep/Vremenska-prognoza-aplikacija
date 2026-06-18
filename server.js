@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000; 
+const PORT = process.env.PORT || 3000;
 
 let cachedWeather = null;
 let cacheTime = 0;
@@ -86,7 +86,7 @@ app.get('/api/weather', async (req, res) => {
       const code = data.daily.weather_code[index];
 
       return {
-        date: date,
+        date,
         icon: getWeatherIcon(code),
         description: weatherDescriptions[code] || 'Nepoznato',
         minTemperature: data.daily.temperature_2m_min[index],
@@ -109,7 +109,7 @@ app.get('/api/weather', async (req, res) => {
         icon: getWeatherIcon(currentCode),
         description: weatherDescriptions[currentCode] || 'Nepoznato'
       },
-      forecast: forecast
+      forecast
     };
 
     cachedWeather = weatherResult;
@@ -120,21 +120,23 @@ app.get('/api/weather', async (req, res) => {
   } catch (error) {
     console.log('Greška:', error.message);
 
-    res.json({
+    const backupResult = {
       city: CITY.name,
       source: 'Rezervni podaci - Open-Meteo trenutno nije dostupan',
       updatedAt: new Date().toISOString(),
       current: {
-        temperature: '--',
-        feelsLike: '--',
-        humidity: '--',
-        precipitation: '--',
-        windSpeed: '--',
+        temperature: 0,
+        feelsLike: 0,
+        humidity: 0,
+        precipitation: 0,
+        windSpeed: 0,
         icon: '⚠️',
         description: 'Web servis trenutno nije dostupan'
       },
       forecast: []
-    });
+    };
+
+    res.json(backupResult);
   }
 });
 
