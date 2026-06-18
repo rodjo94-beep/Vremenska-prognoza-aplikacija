@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vremenska prognoza - Kosovska Mitrovica</title>
+  <meta name="theme-color" content="#1f7acb" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <div>
+        <p class="label">Web servis aplikacija</p>
+        <h1>Vremenska prognoza</h1>
+        <p class="subtitle">Realni podaci za Kosovsku Mitrovicu preko JSON web servisa.</p>
+      </div>
+      <button id="refreshBtn">Osveži podatke</button>
+    </section>
+
+    <section id="status" class="status">Učitavanje prognoze...</section>
+
+    <section id="currentWeather" class="current hidden"></section>
+
+    <section class="forecast-section">
+      <h2>Prognoza za 7 dana</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Vreme</th>
+              <th>Min</th>
+              <th>Max</th>
+              <th>Padavine</th>
+              <th>Vetar</th>
+            </tr>
+          </thead>
+          <tbody id="forecastBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

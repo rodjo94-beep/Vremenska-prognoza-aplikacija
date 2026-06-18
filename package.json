@@ -1,0 +1,16 @@
+{
+  "name": "kosovska-mitrovica-weather",
+  "version": "1.0.0",
+  "description": "Student project: weather forecast app using a JSON web service for Kosovska Mitrovica.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["weather", "web-service", "json", "express", "open-meteo"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
