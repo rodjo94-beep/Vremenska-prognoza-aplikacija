@@ -1,54 +1,16 @@
 const express = require('express');
 const path = require('path');
 
-const app = express(); 
-const PORT = process.env.PORT || 3000; 
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 let cachedWeather = null;
 let cacheTime = 0;
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minuta
+const CACHE_DURATION = 10 * 60 * 1000;
 
 const CITY = {
-  name: 'Kosovska Mitrovica',
-  latitude: 42.8914,
-  longitude: 20.8660,
-  timezone: 'Europe/Belgrade'
+  name: 'Kosovska Mitrovica'
 };
-
-const weatherDescriptions = {
-  0: 'Vedro',
-  1: 'Pretežno vedro',
-  2: 'Delimično oblačno',
-  3: 'Oblačno',
-  45: 'Magla',
-  48: 'Magla sa injem',
-  51: 'Slaba rosulja',
-  53: 'Umerena rosulja',
-  55: 'Jaka rosulja',
-  61: 'Slaba kiša',
-  63: 'Umerena kiša',
-  65: 'Jaka kiša',
-  71: 'Slab sneg',
-  73: 'Umeren sneg',
-  75: 'Jak sneg',
-  80: 'Slabi pljuskovi',
-  81: 'Umereni pljuskovi',
-  82: 'Jaki pljuskovi',
-  95: 'Grmljavina',
-  96: 'Grmljavina sa slabim gradom',
-  99: 'Grmljavina sa jakim gradom'
-};
-
-function getWeatherIcon(code) {
-  if (code === 0) return '☀️';
-  if ([1, 2].includes(code)) return '🌤️';
-  if (code === 3) return '☁️';
-  if ([45, 48].includes(code)) return '🌫️';
-  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return '🌧️';
-  if ([71, 73, 75].includes(code)) return '❄️';
-  if ([95, 96, 99].includes(code)) return '⛈️';
-  return '🌡️';
-}
 
 app.use(express.static(__dirname));
 
@@ -64,50 +26,49 @@ app.get('/api/weather', async (req, res) => {
       return res.json(cachedWeather);
     }
 
-    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    const url = 'https://wttr.in/Kosovska%20Mitrovica?format=j1';
 
-    url.searchParams.set('latitude', CITY.latitude);
-    url.searchParams.set('longitude', CITY.longitude);
-    url.searchParams.set('timezone', CITY.timezone);
-    url.searchParams.set('current', 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m');
-    url.searchParams.set('daily', 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max');
-    url.searchParams.set('forecast_days', '7');
-
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Kosovska-Mitrovica-Weather-App'
+      }
+    });
 
     if (!response.ok) {
-      throw new Error(`Open-Meteo API error: ${response.status}`);
+      throw new Error(`wttr.in API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const currentCode = data.current.weather_code;
 
-    const forecast = data.daily.time.map((date, index) => {
-      const code = data.daily.weather_code[index];
+    const current = data.current_condition[0];
+
+    const forecast = data.weather.slice(0, 7).map(day => {
+      const code = Number(day.hourly[4].weatherCode);
+      const description = day.hourly[4].weatherDesc[0].value;
 
       return {
-        date,
+        date: day.date,
         icon: getWeatherIcon(code),
-        description: weatherDescriptions[code] || 'Nepoznato',
-        minTemperature: data.daily.temperature_2m_min[index],
-        maxTemperature: data.daily.temperature_2m_max[index],
-        precipitation: data.daily.precipitation_sum[index],
-        windSpeed: data.daily.wind_speed_10m_max[index]
+        description: description,
+        minTemperature: Number(day.mintempC),
+        maxTemperature: Number(day.maxtempC),
+        precipitation: Number(day.hourly[4].precipMM),
+        windSpeed: Number(day.hourly[4].windspeedKmph)
       };
     });
 
     const weatherResult = {
       city: CITY.name,
-      source: 'Open-Meteo JSON web service',
-      updatedAt: data.current.time,
+      source: 'wttr.in JSON web service',
+      updatedAt: new Date().toISOString(),
       current: {
-        temperature: data.current.temperature_2m,
-        feelsLike: data.current.apparent_temperature,
-        humidity: data.current.relative_humidity_2m,
-        precipitation: data.current.precipitation,
-        windSpeed: data.current.wind_speed_10m,
-        icon: getWeatherIcon(currentCode),
-        description: weatherDescriptions[currentCode] || 'Nepoznato'
+        temperature: Number(current.temp_C),
+        feelsLike: Number(current.FeelsLikeC),
+        humidity: Number(current.humidity),
+        precipitation: Number(current.precipMM),
+        windSpeed: Number(current.windspeedKmph),
+        icon: getWeatherIcon(Number(current.weatherCode)),
+        description: current.weatherDesc[0].value
       },
       forecast
     };
@@ -120,9 +81,9 @@ app.get('/api/weather', async (req, res) => {
   } catch (error) {
     console.log('Greška:', error.message);
 
-    const backupResult = {
+    res.json({
       city: CITY.name,
-      source: 'Rezervni podaci - Open-Meteo trenutno nije dostupan',
+      source: 'Greška pri učitavanju web servisa',
       updatedAt: new Date().toISOString(),
       current: {
         temperature: 0,
@@ -130,15 +91,24 @@ app.get('/api/weather', async (req, res) => {
         humidity: 0,
         precipitation: 0,
         windSpeed: 0,
-        
+        icon: '⚠️',
         description: 'Web servis trenutno nije dostupan'
       },
       forecast: []
-    };
-
-    res.json(backupResult);
+    });
   }
 });
+
+function getWeatherIcon(code) {
+  if ([113].includes(code)) return '☀️';
+  if ([116].includes(code)) return '🌤️';
+  if ([119, 122].includes(code)) return '☁️';
+  if ([143, 248, 260].includes(code)) return '🌫️';
+  if ([176, 263, 266, 293, 296, 299, 302, 305, 308, 353, 356, 359].includes(code)) return '🌧️';
+  if ([179, 182, 185, 227, 230, 317, 320, 323, 326, 329, 332, 335, 338, 368, 371].includes(code)) return '❄️';
+  if ([200, 386, 389, 392, 395].includes(code)) return '⛈️';
+  return '🌡️';
+}
 
 app.listen(PORT, () => {
   console.log(`Aplikacija radi na portu ${PORT}`);
