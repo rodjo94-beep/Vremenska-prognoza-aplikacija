@@ -2,6 +2,9 @@ const express = require('express');
 const path = require('path');
 
 const app = express();
+let cachedWeather = null;
+let cacheTime = 0;
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minuta
 const PORT = process.env.PORT || 3000;
 
 const CITY = {
